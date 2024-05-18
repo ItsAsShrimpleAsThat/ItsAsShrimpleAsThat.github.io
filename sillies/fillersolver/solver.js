@@ -29,7 +29,7 @@ const selectorGap = 30;
 const selectorDistFromTop = 505;
 const selectedBoxSizeDiff = 16; //MUST BE EVEN NUMBER TO PREVENT VISUAL BUGS
 
-let selectedColor = 1;
+let selectedColor = 0;
 
 let currentGame = [[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
                    [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]];
@@ -75,6 +75,17 @@ function getMouseBox(mx, my)
     return -1;
 }
 
+function screenCoord2gridCoord(mx, my)
+{
+    if(mx >= leftOffset && mx <= canvas.width - leftOffset)
+    {
+        if(my >= topMargin && my <= 7 * squareSize + topMargin)
+        {
+            return [Math.floor((mx - leftOffset) / squareSize), Math.floor((my - topMargin) / squareSize)];
+        }
+    }
+}
+
 function clickEvent(canvas, event) {
     const rect = canvas.getBoundingClientRect()
     let x = (event.clientX - rect.left) * clickX2canvasX;
@@ -86,21 +97,36 @@ function clickEvent(canvas, event) {
         selectedColor = clickedBox;
 
         let selectedBoxX = canvas.width / 2  + (selectorGap + squareSize) * (clickedBox-4) + selectorGap/2;
+
+        //brings previous selected box's size back to normal
         if(previousSelectedBox != -1)
         {
             let previousX = canvas.width / 2  + (selectorGap + squareSize) * (previousSelectedBox-4) + selectorGap/2;
             
+            //Remove old fill
             ctx.fillStyle = backgroundColor;
             ctx.fillRect(previousX - selectedBoxSizeDiff / 2, selectorDistFromTop - selectedBoxSizeDiff / 2, squareSize + selectedBoxSizeDiff, squareSize + selectedBoxSizeDiff);
-
-            ctx.fillStyle = colors[previousSelectedBox]
+            
+            //draw new fill on top
+            ctx.fillStyle = colors[previousSelectedBox];
             ctx.fillRect(previousX, selectorDistFromTop, squareSize, squareSize);
         }
 
-        ctx.fillStyle = colors[clickedBox]
+        ctx.fillStyle = colors[clickedBox];
         ctx.fillRect(selectedBoxX - selectedBoxSizeDiff / 2, selectorDistFromTop - selectedBoxSizeDiff / 2, squareSize + selectedBoxSizeDiff, squareSize + selectedBoxSizeDiff);
 
         previousSelectedBox = clickedBox;
+    }
+    else
+    {
+        if(selectedColor != 0)
+        {
+            let gridCoord = screenCoord2gridCoord(x, y);
+
+            ctx.fillStyle = colors[selectedColor];
+            ctx.fillRect(leftOffset + (gridCoord[0] * squareSize), gridCoord[1] * squareSize + topMargin, squareSize,  squareSize);  
+            currentGame[gridCoord[0], gridCoord[1]] = selectedColor;
+        }
     }
 }
 
